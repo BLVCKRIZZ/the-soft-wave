@@ -17,7 +17,7 @@
     --purple: #a08ec7;
     --red: #c47c7c;
     --green: #7cb8a0;
-    --muted: #5a5755;
+    --muted: #8b8580;
     --card: #111113;
     --border: rgba(233,229,223,0.07);
     --panel-bg: #0d0d0f;
@@ -592,11 +592,23 @@
   .modal-body { padding: 1.75rem 2rem; }
 
   .modal-step-label {
-    font-size: 0.55rem;
+    font-size: 0.68rem;
     letter-spacing: 0.15em;
     text-transform: uppercase;
-    color: var(--muted);
+    color: #aaa39b;
     margin-bottom: 0.75rem;
+  }
+
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
   }
 
   .mood-presets {
@@ -622,6 +634,10 @@
 
   .mood-preset-btn:hover { border-color: var(--gold); color: var(--gold); }
   .mood-preset-btn.selected { border-color: var(--gold); color: var(--gold); background: rgba(201,169,127,0.07); }
+  .mood-preset-btn:focus-visible,
+  .length-btn:focus-visible,
+  .artist-chip:focus-visible,
+  .btn:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
 
   .custom-mood-input {
     width: 100%;
@@ -639,6 +655,62 @@
 
   .custom-mood-input:focus { border-color: var(--blue); }
   .custom-mood-input::placeholder { color: var(--muted); }
+
+  .mood-context-details {
+    margin-top: 0.75rem;
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    background: rgba(255,255,255,0.015);
+  }
+
+  .mood-context-details summary {
+    padding: 0.7rem 0.85rem;
+    color: #aaa39b;
+    font-size: 0.65rem;
+    letter-spacing: 0.06em;
+    cursor: pointer;
+  }
+
+  .mood-context-fields {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.6rem;
+    padding: 0 0.85rem 0.85rem;
+  }
+
+  .mood-context-field { min-width: 0; }
+  .mood-context-field.wide { grid-column: 1 / -1; }
+  .mood-context-field label {
+    display: block;
+    margin-bottom: 0.3rem;
+    color: #aaa39b;
+    font-size: 0.58rem;
+    letter-spacing: 0.05em;
+  }
+  .mood-context-field input,
+  .mood-context-field textarea {
+    width: 100%;
+    min-height: 2.5rem;
+    padding: 0.65rem 0.75rem;
+    color: var(--text);
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    font: 0.68rem/1.5 'DM Mono', monospace;
+  }
+  .mood-context-field textarea { min-height: 4.5rem; resize: vertical; }
+  .mood-context-field input:focus,
+  .mood-context-field textarea:focus { outline: 2px solid var(--blue); outline-offset: 1px; }
+
+  .playlist-setup-summary {
+    margin-top: 1rem;
+    padding: 0.7rem 0.8rem;
+    border: 1px solid rgba(201,169,127,0.22);
+    background: rgba(201,169,127,0.045);
+    color: #c5b9aa;
+    font-size: 0.65rem;
+    line-height: 1.5;
+  }
 
   .length-options {
     display: flex;
@@ -1017,7 +1089,8 @@
     .sidebar.mobile-open ~ .sidebar-overlay { display: block; }
     .main { padding: 1rem; margin-left: 0; }
     .chat-panel { width: calc(100vw - 2rem); right: 1rem; }
-    .mood-presets { grid-template-columns: 1fr; }
+    .mood-presets, .mood-context-fields { grid-template-columns: 1fr; }
+    .mood-context-field.wide { grid-column: auto; }
     .artist-filter-grid { grid-template-columns: repeat(2, 1fr); }
     .playlist-title { font-size: 2rem; }
     .header-actions .btn span { display: none; }
@@ -1137,7 +1210,15 @@
     background: rgba(255,255,255,0.03);
     letter-spacing: 0.04em;
     transition: all 0.15s;
+    cursor: pointer;
+    font-family: 'DM Mono', monospace;
   }
+  .artist-chip:hover { border-color: rgba(201,169,127,0.45); }
+  .artist-chip.candidate { color: #b9b2aa; background: transparent; }
+  .artist-chip.candidate:hover { color: var(--gold); }
+  .artist-pool-help { color: #aaa39b; font-size: 0.64rem; line-height: 1.5; margin: 0.4rem 0 0.65rem; }
+  .artist-picker-details { margin-top: 0.55rem; }
+  .artist-picker-details summary { color: #aaa39b; font-size: 0.62rem; padding: 0.4rem 0; cursor: pointer; }
   .artist-chip.removed {
     opacity: 0.3;
     border-color: rgba(196,124,124,0.25);
@@ -1375,47 +1456,84 @@
 
 <!-- PLAYLIST GENERATOR MODAL -->
 <div class="modal-overlay" id="playlistModal">
-  <div class="modal">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="playlistModalTitle" tabindex="-1">
     <div class="modal-header">
-      <div class="modal-title">Generate a Playlist</div>
-      <button class="detail-close" onclick="closePlaylistModal()">✕</button>
+      <div class="modal-title" id="playlistModalTitle">Generate a Playlist</div>
+      <button class="detail-close" aria-label="Close playlist generator" onclick="closePlaylistModal()">✕</button>
     </div>
     <div class="modal-body">
-      <div class="modal-step-label">Step 1 — Choose a mood</div>
-      <div class="mood-presets" id="moodPresets">
-        <button class="mood-preset-btn" onclick="selectPreset(this,'Late Night Heartbreak')">Late Night Heartbreak</button>
-        <button class="mood-preset-btn" onclick="selectPreset(this,'Warm Sunday Morning')">Warm Sunday Morning</button>
-        <button class="mood-preset-btn" onclick="selectPreset(this,'Nostalgic & Bittersweet')">Nostalgic & Bittersweet</button>
-        <button class="mood-preset-btn" onclick="selectPreset(this,'Dark & Brooding')">Dark & Brooding</button>
-        <button class="mood-preset-btn" onclick="selectPreset(this,'Spiritual & Hopeful')">Spiritual & Hopeful</button>
-        <button class="mood-preset-btn" onclick="selectPreset(this,'Sensual & Slow')">Sensual & Slow</button>
-        <button class="mood-preset-btn" onclick="selectPreset(this,'Energetic & Groovy')">Energetic & Groovy</button>
-        <button class="mood-preset-btn" onclick="selectPreset(this,'Introspective & Quiet')">Introspective & Quiet</button>
+      <div class="modal-step-label" id="moodStepLabel">Step 1 — Choose a mood</div>
+      <div class="mood-presets" id="moodPresets" role="group" aria-labelledby="moodStepLabel">
+        <button type="button" class="mood-preset-btn" aria-pressed="false" onclick="selectPreset(this,'Late Night Heartbreak')">Late Night Heartbreak</button>
+        <button type="button" class="mood-preset-btn" aria-pressed="false" onclick="selectPreset(this,'Warm Sunday Morning')">Warm Sunday Morning</button>
+        <button type="button" class="mood-preset-btn" aria-pressed="false" onclick="selectPreset(this,'Nostalgic & Bittersweet')">Nostalgic & Bittersweet</button>
+        <button type="button" class="mood-preset-btn" aria-pressed="false" onclick="selectPreset(this,'Dark & Brooding')">Dark & Brooding</button>
+        <button type="button" class="mood-preset-btn" aria-pressed="false" onclick="selectPreset(this,'Spiritual & Hopeful')">Spiritual & Hopeful</button>
+        <button type="button" class="mood-preset-btn" aria-pressed="false" onclick="selectPreset(this,'Sensual & Slow')">Sensual & Slow</button>
+        <button type="button" class="mood-preset-btn" aria-pressed="false" onclick="selectPreset(this,'Energetic & Groovy')">Energetic & Groovy</button>
+        <button type="button" class="mood-preset-btn" aria-pressed="false" onclick="selectPreset(this,'Introspective & Quiet')">Introspective & Quiet</button>
       </div>
-      <input type="text" class="custom-mood-input" id="customMood" placeholder="Or describe your own mood...">
+      <label class="sr-only" for="customMood">Describe your own mood</label>
+      <input type="text" class="custom-mood-input" id="customMood" aria-label="Describe your own mood" placeholder="Or describe your own mood..." oninput="onCustomMoodInput()">
+
+      <details class="mood-context-details">
+        <summary>Add details (optional)</summary>
+        <div class="mood-context-fields">
+          <div class="mood-context-field">
+            <label for="ctxReferenceArtists">Artists to include as a reference</label>
+            <input id="ctxReferenceArtists" type="text" placeholder="e.g. Frank Ocean, SZA" oninput="updatePlaylistSetupSummary()">
+          </div>
+          <div class="mood-context-field">
+            <label for="ctxAvoidArtists">Artists to avoid</label>
+            <input id="ctxAvoidArtists" type="text" placeholder="e.g. Frank Ocean" oninput="updatePlaylistSetupSummary()">
+          </div>
+          <div class="mood-context-field">
+            <label for="ctxPlace">Setting or place</label>
+            <input id="ctxPlace" type="text" placeholder="e.g. driving, beach, downtown" oninput="updatePlaylistSetupSummary()">
+          </div>
+          <div class="mood-context-field">
+            <label for="ctxColor">Color or texture</label>
+            <input id="ctxColor" type="text" placeholder="e.g. blue, neon, warm" oninput="updatePlaylistSetupSummary()">
+          </div>
+          <div class="mood-context-field wide">
+            <label for="ctxExperience">Describe the moment</label>
+            <textarea id="ctxExperience" placeholder="What happened, where you were, and what it felt like..." oninput="updatePlaylistSetupSummary()"></textarea>
+          </div>
+        </div>
+      </details>
 
       <hr style="border:none;border-top:1px solid var(--border);margin:1.25rem 0;">
 
       <div class="modal-step-label" style="margin-bottom:0.5rem;">Step 2 — Artist pool &nbsp;<span id="artist-pool-count" style="color:var(--muted);font-size:0.5rem;letter-spacing:0.1em;"></span></div>
+      <div class="artist-pool-help">Only selected artists can appear in your playlist. Remove anyone below or browse the full library to add artists.</div>
       <div style="display:flex;gap:0.4rem;margin-bottom:0.6rem;flex-wrap:wrap;align-items:center;">
-        <button class="btn" style="font-size:0.52rem;padding:0.28rem 0.6rem;" onclick="resetArtistPool()">All artists</button>
-        <button class="btn" style="font-size:0.52rem;padding:0.28rem 0.6rem;" onclick="clearArtistPool()">Pick specific</button>
+        <button class="btn" style="font-size:0.58rem;padding:0.35rem 0.65rem;" onclick="useYourListForPool()">Your List</button>
+        <button class="btn" style="font-size:0.58rem;padding:0.35rem 0.65rem;" onclick="resetArtistPool()">All artists</button>
+        <button class="btn" style="font-size:0.58rem;padding:0.35rem 0.65rem;" onclick="clearArtistPool()">Clear selection</button>
         <button class="btn" style="font-size:0.52rem;padding:0.28rem 0.6rem;" id="suggestArtistsBtn" onclick="suggestArtistsForMood()">✦ Suggest for mood</button>
       </div>
-      <input type="text" id="artistPoolSearch" class="custom-mood-input" style="margin-bottom:0.6rem;font-size:0.62rem;padding:0.5rem 0.7rem;margin-top:0;" placeholder="Search artists..." oninput="filterArtistChips(this.value)">
-      <div id="artistPoolChips" style="display:flex;flex-wrap:wrap;gap:0.3rem;max-height:140px;overflow-y:auto;padding-right:0.25rem;margin-bottom:0.5rem;"></div>
+      <div id="artistPoolChips" style="display:flex;flex-wrap:wrap;gap:0.3rem;max-height:140px;overflow-y:auto;padding-right:0.25rem;"></div>
+      <details class="artist-picker-details">
+        <summary>Browse and add artists</summary>
+        <label class="sr-only" for="artistPoolSearch">Search artists to add</label>
+        <input type="text" id="artistPoolSearch" class="custom-mood-input" style="margin-bottom:0.6rem;font-size:0.68rem;padding:0.6rem 0.75rem;margin-top:0;" aria-label="Search artists to add" placeholder="Search artists..." oninput="filterArtistChips(this.value)">
+        <div id="artistPoolResults" style="display:flex;flex-wrap:wrap;gap:0.3rem;max-height:140px;overflow-y:auto;padding-right:0.25rem;margin-bottom:0.5rem;"></div>
+      </details>
       <div id="artistSuggestions"></div>
 
       <hr style="border:none;border-top:1px solid var(--border);margin:1.25rem 0;">
 
       <div class="modal-step-label">Step 3 — Track count</div>
-      <div class="length-options" style="flex-wrap:wrap;">
-        <button class="length-btn" onclick="selectLength(this,5)">5</button>
-        <button class="length-btn selected" onclick="selectLength(this,10)">10</button>
-        <button class="length-btn" onclick="selectLength(this,15)">15</button>
-        <button class="length-btn" onclick="selectLength(this,20)">20</button>
-        <input type="number" id="customLengthInput" min="1" class="add-input" style="width:72px;font-size:0.6rem;padding:0.45rem 0.6rem;flex:none;" placeholder="Custom" oninput="onCustomLengthInput(this)">
+      <div class="length-options" style="flex-wrap:wrap;" role="group" aria-label="Playlist track count">
+        <button type="button" class="length-btn" aria-pressed="false" onclick="selectLength(this,5)">5 tracks</button>
+        <button type="button" class="length-btn selected" aria-pressed="true" onclick="selectLength(this,10)">10 tracks</button>
+        <button type="button" class="length-btn" aria-pressed="false" onclick="selectLength(this,15)">15 tracks</button>
+        <button type="button" class="length-btn" aria-pressed="false" onclick="selectLength(this,20)">20 tracks</button>
+        <label class="sr-only" for="customLengthInput">Custom number of tracks</label>
+        <input type="number" id="customLengthInput" min="1" max="50" class="add-input" style="width:92px;font-size:0.68rem;padding:0.55rem 0.65rem;flex:none;" aria-label="Custom number of tracks" placeholder="Custom" oninput="onCustomLengthInput(this)">
       </div>
+
+      <div id="playlistSetupSummary" class="playlist-setup-summary" role="status" aria-live="polite"></div>
 
       <div class="modal-actions">
         <button class="btn" onclick="closePlaylistModal()">Cancel</button>
@@ -1751,7 +1869,10 @@ async function callGemini(prompt, temperature = 0.85) {
     throw new Error(err.error?.message || `HTTP ${res.status}`);
   }
   const data = await res.json();
-  return data.candidates[0].content.parts[0].text;
+  const candidate = data.candidates?.[0];
+  const text = candidate?.content?.parts?.map(part => part.text || '').join('').trim();
+  if (!text) throw new Error(data.promptFeedback?.blockReason || candidate?.finishReason || 'The AI returned no text. Please try again.');
+  return text;
 }
 
 // ============================================================
@@ -1785,13 +1906,169 @@ async function callOpenRouter(messages, temperature = 0.75) {
     throw new Error(err.error?.message || `HTTP ${res.status}`);
   }
   const data = await res.json();
-  return data.choices[0].message.content;
+  const text = data.choices?.[0]?.message?.content;
+  if (typeof text !== 'string' || !text.trim()) throw new Error('The AI returned no text. Please try again.');
+  return text;
+}
+
+async function callCurator(prompt, temperature = 0.35, system = 'Return only the requested JSON. Do not invent catalog IDs or tracks.') {
+  if (OPENROUTER_KEY) return callOpenRouter([
+    { role: 'system', content: system },
+    { role: 'user', content: prompt }
+  ], temperature);
+  if (GEMINI_API_KEY) return callGemini(prompt, temperature);
+  throw new Error('Add an API key to use AI curation.');
 }
 
 function artistContextBlock(artists) {
   return artists.map(a =>
     `- ${a.name} (${a.genre}): ${a.about} Sound: ${a.sound}. Moods: ${a.moods.join(', ')}. Known tracks: ${a.tracks.join(', ')}.`
   ).join('\n');
+}
+
+function escapeHtml(value) {
+  return String(value ?? '').replace(/[&<>"']/g, char => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  })[char]);
+}
+
+function normalizeSearchText(value) {
+  return String(value ?? '').normalize('NFKD').replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim().replace(/\s+/g, ' ');
+}
+
+function levenshteinDistance(left, right) {
+  if (left === right) return 0;
+  if (!left.length) return right.length;
+  if (!right.length) return left.length;
+  let previous = Array.from({ length: right.length + 1 }, (_, i) => i);
+  for (let i = 1; i <= left.length; i++) {
+    const current = [i];
+    for (let j = 1; j <= right.length; j++) {
+      current[j] = Math.min(current[j - 1] + 1, previous[j] + 1, previous[j - 1] + (left[i - 1] === right[j - 1] ? 0 : 1));
+    }
+    previous = current;
+  }
+  return previous[right.length];
+}
+
+function scoreArtistSearch(artist, query) {
+  const q = normalizeSearchText(query);
+  if (!q) return 0;
+  const name = normalizeSearchText(artist.name);
+  const aliases = (artist.aliases || []).map(normalizeSearchText);
+  if (name === q || aliases.includes(q)) return 100;
+  if (name.startsWith(q) || aliases.some(alias => alias.startsWith(q))) return 85;
+  if ([name, ...aliases].some(value => value.includes(q))) return 75;
+  const searchable = [artist.genre, ...(artist.moods || []), ...(artist.tracks || [])].map(normalizeSearchText);
+  if (searchable.some(value => value.includes(q))) return 60;
+  if (q.length >= 4) {
+    const distance = Math.min(...[name, ...aliases].map(value => levenshteinDistance(q, value)));
+    if (distance <= (q.length >= 8 ? 2 : 1)) return 40 - distance;
+  }
+  return 0;
+}
+
+function searchArtistCatalog(query, artists = ARTISTS) {
+  return artists.map(artist => ({ artist, score: scoreArtistSearch(artist, query) }))
+    .filter(result => result.score > 0)
+    .sort((a, b) => b.score - a.score || a.artist.name.localeCompare(b.artist.name));
+}
+
+function findCatalogArtist(name, artists = ARTISTS) {
+  const normalized = normalizeSearchText(name);
+  if (!normalized) return null;
+  return artists.find(artist => normalizeSearchText(artist.name) === normalized ||
+    (artist.aliases || []).some(alias => normalizeSearchText(alias) === normalized)) || null;
+}
+
+function findArtistMentions(query, artists = ARTISTS) {
+  const normalizedQuery = ` ${normalizeSearchText(query)} `;
+  return artists.filter(artist => artist.verified !== false && [artist.name, ...(artist.aliases || [])].some(name => {
+    const normalizedName = normalizeSearchText(name);
+    return normalizedName && normalizedQuery.includes(` ${normalizedName} `);
+  }));
+}
+
+function parseModelJson(text) {
+  const raw = String(text ?? '').trim().replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '');
+  const firstBrace = raw.indexOf('{');
+  const lastBrace = raw.lastIndexOf('}');
+  if (firstBrace < 0 || lastBrace < firstBrace) throw new Error('The AI returned an invalid response. Please try again.');
+  try { return JSON.parse(raw.slice(firstBrace, lastBrace + 1)); }
+  catch { throw new Error('The AI returned invalid JSON. Please try again.'); }
+}
+
+function getCatalogTracks(artistIds = ARTISTS.map(a => a.id)) {
+  const allowed = new Set(artistIds);
+  return ARTISTS.filter(artist => allowed.has(artist.id) && artist.verified !== false)
+    .flatMap(artist => (artist.tracks || []).map((track, index) => ({
+      trackId: `${artist.id}::${index}`,
+      artistId: artist.id,
+      artist: artist.name,
+      track
+    })));
+}
+
+function validateTrackList(data, candidates, expectedCount, avoidList = '') {
+  if (!data || !Array.isArray(data.tracks)) throw new Error('The AI did not return a track list.');
+  if (data.tracks.length !== expectedCount) throw new Error(`Expected ${expectedCount} tracks but received ${data.tracks.length}.`);
+  const candidateById = new Map(candidates.map(track => [track.trackId, track]));
+  const seen = new Set();
+  const avoidTerms = String(avoidList).split(/[,;\n]+/).map(normalizeSearchText).filter(Boolean);
+  return data.tracks.map(item => {
+    const catalogTrack = candidateById.get(String(item?.trackId || ''));
+    if (!catalogTrack) throw new Error('The AI selected a track outside the available catalog.');
+    if (seen.has(catalogTrack.trackId)) throw new Error('The AI returned a duplicate track.');
+    seen.add(catalogTrack.trackId);
+    if (avoidTerms.some(term => normalizeSearchText(catalogTrack.artist) === term || normalizeSearchText(catalogTrack.artist).includes(term))) {
+      throw new Error(`The AI included an artist from your avoid list: ${catalogTrack.artist}.`);
+    }
+    const reason = String(item.reason ?? '').trim();
+    if (!reason || reason.length > 400) throw new Error('A track explanation was missing or too long.');
+    return { ...catalogTrack, reason };
+  });
+}
+
+function validatePlaylistResponse(data, candidates, expectedCount, avoidList = '') {
+  const title = String(data?.title ?? '').trim();
+  if (!title || title.length > 100) throw new Error('The playlist title was missing or too long.');
+  return { title, tracks: validateTrackList(data, candidates, expectedCount, avoidList) };
+}
+
+function validateArtistSuggestions(data, candidates, expectedCount = 6) {
+  if (!data || !Array.isArray(data.suggestions) || data.suggestions.length !== expectedCount) {
+    throw new Error(`Expected ${expectedCount} artist suggestions.`);
+  }
+  const seen = new Set();
+  return data.suggestions.map(item => {
+    const artist = candidates.find(candidate => candidate.id === String(item?.artistId || ''));
+    if (!artist || seen.has(artist.id)) throw new Error('The AI returned an unknown or duplicate artist.');
+    seen.add(artist.id);
+    const reason = String(item.reason ?? '').trim();
+    if (!reason || reason.length > 300) throw new Error('An artist explanation was missing or too long.');
+    return { artist, reason };
+  });
+}
+
+function makeCatalogPlaylist(mood, artistIds, count, avoidList = '') {
+  const avoidTerms = String(avoidList).split(/[,;\n]+/).map(normalizeSearchText).filter(Boolean);
+  const candidates = getCatalogTracks(artistIds).filter(item => {
+    const artist = normalizeSearchText(item.artist);
+    return !avoidTerms.some(term => artist === term || artist.includes(term));
+  });
+  if (candidates.length < count) {
+    throw new Error(`Only ${candidates.length} catalogued tracks are available from this selection. Select more artists or choose a shorter playlist.`);
+  }
+  const shuffled = [...candidates];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return {
+    title: `${mood.charAt(0).toUpperCase() + mood.slice(1)} — a soft wave`,
+    tracks: shuffled.slice(0, count).map(track => ({ ...track, reason: 'A catalog pick for this mood.' }))
+  };
 }
 
 // ============================================================
@@ -1859,8 +2136,8 @@ function createArtistCard(artist) {
   const isFav = favoriteArtistIds.has(artist.id);
   card.innerHTML = `
     <button class="fav-btn${isFav ? ' active' : ''}" data-id="${artist.id}" title="Favourite" onclick="event.stopPropagation();toggleFavorite('${artist.id}',this)">♥</button>
-    <div class="artist-name">${artist.name}</div>
-    <div class="artist-tag">${artist.genre.split('/')[0].trim()}</div>
+    <div class="artist-name">${escapeHtml(artist.name)}</div>
+    <div class="artist-tag">${escapeHtml(artist.genre.split('/')[0].trim())}${artist.verified === false ? ' · unverified' : ''}</div>
     <div class="mood-dots">${moodDots}</div>
   `;
 
@@ -1939,14 +2216,14 @@ function openDetail(artistId) {
   });
 
   const panel = document.getElementById('detailInner');
-  const moodTagsHtml = artist.moods.map(m => `<span class="mood-tag">${m}</span>`).join('');
+  const moodTagsHtml = artist.moods.map(m => `<span class="mood-tag">${escapeHtml(m)}</span>`).join('');
   const tracksHtml = artist.tracks.map((t, i) => {
     const raw = artist.name + ' ' + t;
     const spotifyUrl = `https://open.spotify.com/search/${spotifyQ(raw)}`;
     const appleMusicUrl = `music://music.apple.com/search?term=${appleQ(raw)}`;
     return `<div class="track-item" style="display:flex;align-items:center;gap:0.75rem;padding:0.6rem 0;border-bottom:1px solid var(--border);">
       <span class="track-num">0${i+1}</span>
-      <span class="track-name" style="flex:1;">${t}</span>
+      <span class="track-name" style="flex:1;">${escapeHtml(t)}</span>
       <a href="${spotifyUrl}" target="_blank" class="track-spotify" style="text-decoration:none;">↗ Spotify</a>
       <a href="${appleMusicUrl}" class="track-spotify" style="text-decoration:none;margin-left:0.5rem;">↗ Apple</a>
     </div>`;
@@ -1954,17 +2231,18 @@ function openDetail(artistId) {
 
   panel.innerHTML = `
     <button class="detail-close" onclick="closeDetail()">✕</button>
-    <div class="detail-group-label">${SECTION_LABELS[artist.group]}</div>
-    <div class="detail-name">${artist.name}</div>
-    <div class="detail-genre">${artist.genre}</div>
+    <div class="detail-group-label">${escapeHtml(SECTION_LABELS[artist.group] || 'Artist')}</div>
+    <div class="detail-name">${escapeHtml(artist.name)}</div>
+    <div class="detail-genre">${escapeHtml(artist.genre)}</div>
+    ${artist.verified === false ? '<div class="detail-about" role="status">AI-generated profile; tracks and details have not been independently verified.</div>' : ''}
 
     <div class="detail-section-label">About</div>
-    <div class="detail-about">${artist.about}</div>
+    <div class="detail-about">${escapeHtml(artist.about)}</div>
 
     <hr class="detail-divider">
 
     <div class="detail-section-label">Sound</div>
-    <div class="detail-sound">${artist.sound}</div>
+    <div class="detail-sound">${escapeHtml(artist.sound)}</div>
 
     <hr class="detail-divider">
 
@@ -2014,45 +2292,46 @@ async function runSoundsLike(artistId) {
   btn.disabled = true;
   resultsDiv.innerHTML = '<div class="loading-pulse" style="margin-top:1rem;">searching the pool...</div>';
 
-  const allArtistContext = artistContextBlock(ARTISTS);
+  const catalogTracks = getCatalogTracks();
+  const trackOptions = catalogTracks.map(track => `${track.trackId} | ${track.artist} | ${track.track}`).join('\n');
 
   const prompt = `You are a music curator with encyclopedic knowledge of R&B, soul, and related genres.
 
 A user is browsing the artist "${artist.name}" and typed this sonic reference or feeling:
 "${query}"
 
-Based on the following artist pool, find 5 tracks that match this sonic reference or emotional feeling. Use actual known tracks by these artists (from their starter tracks listed, or other real well-known tracks).
+Select exactly 5 distinct tracks from the catalog below that match this sonic reference or emotional feeling. Do not invent or alter artist names, titles, or IDs. Return the trackId exactly as listed.
 
-ARTIST POOL:
-${allArtistContext}
+CATALOG TRACK OPTIONS:
+${trackOptions}
 
 Return EXACTLY this JSON format and nothing else:
 {
   "tracks": [
     {
-      "artist": "Artist Name",
-      "track": "Track Title",
+    "trackId": "artist-id::track-index",
       "reason": "One sentence explaining why this track matches, written in second person, present tense, in a poetic/evocative style."
     }
   ]
 }`;
 
   try {
-    let text;
-    if (OPENROUTER_KEY) {
-      const messages = [
-        { role: 'system', content: 'You are a music curator. Return only valid JSON, no markdown.' },
-        { role: 'user', content: prompt }
-      ];
-      text = await callOpenRouter(messages, 0.8);
-    } else {
-      text = await callGemini(prompt, 0.8);
+    let raw = await callCurator(prompt, 0.3, 'You are a catalog-grounded music curator. Use only supplied track IDs. Return valid JSON and no markdown.');
+    let data;
+    try {
+      data = parseModelJson(raw);
+      data.tracks = validateTrackList(data, catalogTracks, 5);
+    } catch (validationError) {
+      raw = await callCurator(`${prompt}\n\nYour previous response failed validation: ${validationError.message} Return a corrected response using exactly five distinct track IDs from the catalog.`, 0.1, 'Return valid JSON using only supplied catalog track IDs.');
+      data = parseModelJson(raw);
+      data.tracks = validateTrackList(data, catalogTracks, 5);
     }
-    const clean = text.replace(/```json|```/g, '').trim();
-    const data = JSON.parse(clean);
     renderAiTracks(data.tracks, 'soundsLikeResults', true);
   } catch(e) {
-    resultsDiv.innerHTML = `<div class="error-msg">Couldn't find matches: ${e.message}. Check your API key.</div>`;
+    const error = document.createElement('div');
+    error.className = 'error-msg';
+    error.textContent = `Couldn't find verified matches: ${e.message}`;
+    resultsDiv.replaceChildren(error);
   }
 
   btn.disabled = false;
@@ -2071,12 +2350,24 @@ function clearArtistPool() {
 }
 
 function initArtistPool() {
-  selectedArtistIds = null;
   poolSearchQuery = '';
   const search = document.getElementById('artistPoolSearch');
   if (search) search.value = '';
   const sugBox = document.getElementById('artistSuggestions');
   if (sugBox) sugBox.innerHTML = '';
+  renderArtistPool();
+}
+
+function getDefaultArtistPoolIds() {
+  const ownList = ARTISTS.filter(a => a.group === 'g1').map(a => a.id);
+  return ownList.length ? ownList : ARTISTS.map(a => a.id);
+}
+
+function useYourListForPool() {
+  selectedArtistIds = getDefaultArtistPoolIds();
+  poolSearchQuery = '';
+  const search = document.getElementById('artistPoolSearch');
+  if (search) search.value = '';
   renderArtistPool();
 }
 
@@ -2087,19 +2378,41 @@ function getActivePoolIds() {
 function renderArtistPool() {
   const container = document.getElementById('artistPoolChips');
   if (!container) return;
+  const results = document.getElementById('artistPoolResults');
   const q = poolSearchQuery.toLowerCase();
   const activeIds = getActivePoolIds();
-  const isPickMode = selectedArtistIds !== null;
-  const visible = ARTISTS.filter(a =>
-    !q || a.name.toLowerCase().includes(q) || a.genre.toLowerCase().includes(q)
-  );
-  container.innerHTML = visible.map(a => {
-    const isIn = activeIds.includes(a.id);
-    return `<span class="artist-chip${isIn ? '' : ' removed'}" onclick="toggleArtistInPool('${a.id}')" style="cursor:pointer;" title="${isIn ? 'Remove from playlist' : 'Add to playlist'}">` +
-      `${a.name}` +
-      `<button class="artist-chip-remove" onclick="event.stopPropagation();toggleArtistInPool('${a.id}')">${isIn ? '×' : '+'}</button>` +
-      `</span>`;
-  }).join('');
+  const selected = ARTISTS.filter(a => activeIds.includes(a.id));
+  const candidates = ARTISTS.map(artist => ({ artist, score: q ? scoreArtistSearch(artist, q) : 1 }))
+    .filter(result => !activeIds.includes(result.artist.id) && result.score > 0)
+    .sort((a, b) => b.score - a.score || a.artist.name.localeCompare(b.artist.name))
+    .map(result => result.artist);
+  const renderChips = (target, artists, selectedState, emptyMessage) => {
+    target.replaceChildren();
+    if (!artists.length) {
+      const empty = document.createElement('span');
+      empty.className = 'artist-pool-help';
+      empty.textContent = emptyMessage;
+      target.appendChild(empty);
+      return;
+    }
+    artists.forEach(artist => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = `artist-chip${selectedState ? '' : ' candidate'}`;
+      button.setAttribute('aria-pressed', String(selectedState));
+      button.setAttribute('aria-label', `${selectedState ? 'Remove' : 'Add'} ${artist.name} ${selectedState ? 'from' : 'to'} playlist`);
+      button.addEventListener('click', () => toggleArtistInPool(artist.id));
+      const name = document.createElement('span');
+      name.textContent = artist.name;
+      const marker = document.createElement('span');
+      marker.setAttribute('aria-hidden', 'true');
+      marker.textContent = selectedState ? '×' : '+';
+      button.append(name, marker);
+      target.appendChild(button);
+    });
+  };
+  renderChips(container, selected, true, 'No artists selected yet. Browse the library to add some.');
+  if (results) renderChips(results, candidates, false, 'No matching artists to add.');
   updateArtistPoolCount();
 }
 
@@ -2133,7 +2446,18 @@ function filterArtistChips(q) {
 function updateArtistPoolCount() {
   const count = selectedArtistIds === null ? ARTISTS.length : selectedArtistIds.length;
   const el = document.getElementById('artist-pool-count');
-  if (el) el.textContent = selectedArtistIds === null ? `all ${count}` : `${count} of ${ARTISTS.length}`;
+  if (el) el.textContent = `${count} selected · ${ARTISTS.length} available`;
+  updatePlaylistSetupSummary();
+}
+
+function updatePlaylistSetupSummary() {
+  const summary = document.getElementById('playlistSetupSummary');
+  if (!summary) return;
+  const mood = document.getElementById('customMood')?.value.trim() || selectedMood || 'Choose a mood';
+  const artists = getActivePoolIds().length;
+  const customLength = parseInt(document.getElementById('customLengthInput')?.value, 10);
+  const tracks = Number.isInteger(customLength) && customLength > 0 ? Math.min(customLength, 50) : selectedLength;
+  summary.textContent = `${mood} · ${artists} ${artists === 1 ? 'artist' : 'artists'} · ${tracks} ${tracks === 1 ? 'track' : 'tracks'}`;
 }
 
 async function suggestArtistsForMood() {
@@ -2151,31 +2475,33 @@ async function suggestArtistsForMood() {
   btn.disabled = true; btn.textContent = 'Thinking...';
   sugBox.innerHTML = '<div class="loading-pulse" style="font-size:0.6rem;margin-top:0.6rem;">Finding artists for this mood...</div>';
 
-  const poolNames = ARTISTS.map(a => a.name).join(', ');
-  const prompt = `Music curator task. For the mood "${mood}", suggest exactly 6 artists from R&B/soul/neo-soul. Use artists from this pool where they fit: ${poolNames}. You may also suggest 1-2 not in the pool if they perfectly fit.
+  const candidates = ARTISTS.filter(artist => artist.verified !== false);
+  const pool = candidates.map(artist => `${artist.id} | ${artist.name} | ${artist.genre} | ${artist.moods.join(', ')}`).join('\n');
+  const prompt = `Suggest exactly 6 different artists from this catalog for the mood "${mood}". Select only artists listed below. Do not invent IDs or include artists outside the catalog.
 
 Return ONLY this JSON, no markdown:
 {
   "suggestions": [
-    { "name": "Artist Name", "reason": "One sentence why they fit this mood.", "inPool": true }
+    { "artistId": "catalog-id", "reason": "One sentence why they fit this mood." }
   ]
 }
-Set inPool:true only if the name exactly matches a pool artist above.`;
+CATALOG:\n${pool}`;
 
   try {
-    let text;
-    if (OPENROUTER_KEY) {
-      text = await callOpenRouter([
-        { role: 'system', content: 'Return only valid JSON.' },
-        { role: 'user', content: prompt }
-      ], 0.8);
-    } else {
-      text = await callGemini(prompt, 0.8);
+    let data;
+    try {
+      data = parseModelJson(await callCurator(prompt, 0.25, 'You are a music curator. Use only the provided catalog IDs. Return valid JSON.'));
+      data.suggestions = validateArtistSuggestions(data, candidates);
+    } catch (validationError) {
+      data = parseModelJson(await callCurator(`${prompt}\n\nYour previous response failed validation: ${validationError.message} Return exactly six unique IDs from the catalog.`, 0.1));
+      data.suggestions = validateArtistSuggestions(data, candidates);
     }
-    const data = JSON.parse(text.replace(/```json|```/g, '').trim());
     renderArtistSuggestions(data.suggestions);
   } catch(e) {
-    sugBox.innerHTML = `<div class="error-msg" style="font-size:0.6rem;margin-top:0.4rem;">Couldn't get suggestions: ${e.message}</div>`;
+    const error = document.createElement('div');
+    error.className = 'error-msg';
+    error.textContent = `Couldn't get catalog suggestions: ${e.message}`;
+    sugBox.replaceChildren(error);
   }
   btn.disabled = false; btn.textContent = '✦ Suggest for mood';
 }
@@ -2183,27 +2509,43 @@ Set inPool:true only if the name exactly matches a pool artist above.`;
 function renderArtistSuggestions(suggestions) {
   const sugBox = document.getElementById('artistSuggestions');
   const activeIds = getActivePoolIds();
-  const html = `<div style="font-size:0.52rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--muted);margin:0.75rem 0 0.4rem;">AI picks for this mood</div>` +
-    suggestions.map(s => {
-      const known = ARTISTS.find(a => a.name.toLowerCase() === s.name.toLowerCase());
-      const isIn = known && activeIds.includes(known.id);
-      return `<div style="display:flex;align-items:flex-start;gap:0.65rem;padding:0.5rem 0;border-bottom:1px solid var(--border);">
-        <div style="flex:1;min-width:0;">
-          <div style="font-size:0.68rem;font-weight:500;">${s.name}${!known ? `&nbsp;<span style="font-size:0.48rem;color:var(--muted);border:1px solid var(--border);padding:0.1rem 0.3rem;border-radius:2px;">not in library</span>` : ''}</div>
-          <div style="font-size:0.6rem;color:var(--muted);margin-top:0.1rem;line-height:1.5;">${s.reason}</div>
-        </div>
-        ${known
-          ? `<button class="btn" style="font-size:0.5rem;padding:0.25rem 0.5rem;flex-shrink:0;" id="sug-btn-${known.id}" onclick="toggleSuggestion('${known.id}')">${isIn ? '✓ In pool' : '+ Add'}</button>`
-          : `<span style="font-size:0.52rem;color:var(--muted);flex-shrink:0;">not in library</span>`}
-      </div>`;
-    }).join('');
-  sugBox.innerHTML = html;
+  const heading = document.createElement('div');
+  heading.className = 'modal-step-label';
+  heading.textContent = 'Catalog artists suggested for this mood';
+  sugBox.replaceChildren(heading);
+  suggestions.forEach(({ artist, reason }) => {
+    const row = document.createElement('div');
+    row.style.cssText = 'display:flex;align-items:flex-start;gap:0.65rem;padding:0.5rem 0;border-bottom:1px solid var(--border);';
+    const copy = document.createElement('div');
+    copy.style.cssText = 'flex:1;min-width:0;';
+    const name = document.createElement('div');
+    name.style.cssText = 'font-size:0.68rem;font-weight:500;';
+    name.textContent = artist.name;
+    const explanation = document.createElement('div');
+    explanation.style.cssText = 'font-size:0.62rem;color:var(--muted);margin-top:0.1rem;line-height:1.5;';
+    explanation.textContent = reason;
+    copy.append(name, explanation);
+    const button = document.createElement('button');
+    const isIn = activeIds.includes(artist.id);
+    button.className = 'btn';
+    button.style.cssText = 'font-size:0.58rem;padding:0.32rem 0.55rem;flex-shrink:0;';
+    button.id = `sug-btn-${artist.id}`;
+    button.setAttribute('aria-pressed', String(isIn));
+    button.textContent = isIn ? '✓ In pool' : '+ Add';
+    button.addEventListener('click', () => toggleSuggestion(artist.id));
+    row.append(copy, button);
+    sugBox.append(row);
+  });
 }
 
 function toggleSuggestion(id) {
   toggleArtistInPool(id);
   const btn = document.getElementById('sug-btn-' + id);
-  if (btn) btn.textContent = getActivePoolIds().includes(id) ? '✓ In pool' : '+ Add';
+  if (btn) {
+    const isIn = getActivePoolIds().includes(id);
+    btn.textContent = isIn ? '✓ In pool' : '+ Add';
+    btn.setAttribute('aria-pressed', String(isIn));
+  }
 }
 
 // ============================================================
@@ -2228,7 +2570,7 @@ function extractTracksFromChatHTML(html) {
     }
     // Try track-first (local format: "Track Artist")
     if (!artist) {
-      for (const a of ARTISTS) {
+      for (const a of ARTISTS.filter(artist => artist.verified !== false)) {
         const dl = decoded.toLowerCase();
         const al = a.name.toLowerCase();
         if (dl.endsWith(' ' + al)) { artist = a.name; track = decoded.slice(0, decoded.length - a.name.length - 1).trim(); break; }
@@ -2253,57 +2595,118 @@ async function confirmChatSave(saveId) {
   if (!tracks) return;
   const input = document.getElementById('cpl_' + saveId);
   const name = input?.value.trim() || 'Chat Playlist';
-  const { data: { session } } = await _supabase.auth.getSession();
-  if (!session) return;
-  const { data, error } = await _supabase.from('playlists').insert({
-    user_id: session.user.id,
-    name,
-    mood: 'from chat',
-    tracks
-  }).select().single();
-  if (error) { console.error('confirmChatSave:', error); return; }
-  savedPlaylists.unshift({ id: data.id, title: data.name, mood: data.mood, tracks: data.tracks, savedAt: data.created_at });
-  updateSavedCount();
-  updateChatDownloadBtn();
-  document.getElementById('bar_' + saveId)?.remove();
-  showTooltip('Playlist saved ✓');
+  if (name.length > 100) { showTooltip('Playlist names must be 100 characters or fewer.'); return; }
+  try {
+    const { data: { session } } = await _supabase.auth.getSession();
+    if (!session) throw new Error('Sign in to save playlists.');
+    const { data, error } = await _supabase.from('playlists').insert({
+      user_id: session.user.id, name, mood: 'from chat', tracks
+    }).select().single();
+    if (error) throw error;
+    savedPlaylists.unshift({ id: data.id, title: data.name, mood: data.mood, tracks: data.tracks, savedAt: data.created_at });
+    updateSavedCount();
+    updateChatDownloadBtn();
+    document.getElementById('bar_' + saveId)?.remove();
+    showTooltip('Playlist saved ✓');
+  } catch (error) {
+    console.error('confirmChatSave:', error);
+    showTooltip(`Couldn't save playlist: ${error.message || 'Please try again.'}`);
+  }
 }
 
 // ============================================================
 // PLAYLIST GENERATOR — MODAL OPEN / LENGTH
 // ============================================================
 
+let playlistModalReturnFocus = null;
+
 function openPlaylistModal(preselectedIds) {
-  document.getElementById('playlistModal').classList.add('open');
-  if (preselectedIds) selectedArtistIds = preselectedIds;
+  const modal = document.getElementById('playlistModal');
+  if (!modal.classList.contains('open')) playlistModalReturnFocus = document.activeElement;
+  modal.classList.add('open');
+  selectedArtistIds = Array.isArray(preselectedIds)
+    ? preselectedIds.filter(id => ARTISTS.some(a => a.id === id))
+    : getDefaultArtistPoolIds();
   initArtistPool();
+  modal.querySelector('.mood-preset-btn')?.focus();
 }
 
 function closePlaylistModal() {
   document.getElementById('playlistModal').classList.remove('open');
+  if (playlistModalReturnFocus?.isConnected) playlistModalReturnFocus.focus();
+  playlistModalReturnFocus = null;
 }
 
+document.getElementById('playlistModal').addEventListener('keydown', event => {
+  const modal = document.getElementById('playlistModal');
+  if (!modal.classList.contains('open')) return;
+  if (event.key === 'Escape') {
+    event.preventDefault();
+    closePlaylistModal();
+    return;
+  }
+  if (event.key !== 'Tab') return;
+  const focusable = [...modal.querySelectorAll('button:not(:disabled), input:not(:disabled), textarea:not(:disabled), summary')]
+    .filter(element => element.getClientRects().length > 0);
+  if (!focusable.length) return;
+  const first = focusable[0];
+  const last = focusable[focusable.length - 1];
+  if (event.shiftKey && document.activeElement === first) {
+    event.preventDefault();
+    last.focus();
+  } else if (!event.shiftKey && document.activeElement === last) {
+    event.preventDefault();
+    first.focus();
+  }
+});
+
 function selectPreset(btn, mood) {
-  document.querySelectorAll('.mood-preset-btn').forEach(b => b.classList.remove('selected'));
+  document.querySelectorAll('.mood-preset-btn').forEach(b => {
+    b.classList.remove('selected');
+    b.setAttribute('aria-pressed', 'false');
+  });
   btn.classList.add('selected');
+  btn.setAttribute('aria-pressed', 'true');
   selectedMood = mood;
   document.getElementById('customMood').value = '';
+  updatePlaylistSetupSummary();
+}
+
+function onCustomMoodInput() {
+  if (document.getElementById('customMood').value.trim()) {
+    selectedMood = '';
+    document.querySelectorAll('.mood-preset-btn').forEach(b => {
+      b.classList.remove('selected');
+      b.setAttribute('aria-pressed', 'false');
+    });
+  }
+  updatePlaylistSetupSummary();
 }
 
 function selectLength(btn, len) {
-  document.querySelectorAll('.length-btn').forEach(b => b.classList.remove('selected'));
+  document.querySelectorAll('.length-btn').forEach(b => {
+    b.classList.remove('selected');
+    b.setAttribute('aria-pressed', 'false');
+  });
   btn.classList.add('selected');
+  btn.setAttribute('aria-pressed', 'true');
   selectedLength = len;
   const ci = document.getElementById('customLengthInput');
   if (ci) ci.value = '';
+  updatePlaylistSetupSummary();
 }
 
 function onCustomLengthInput(input) {
   const val = parseInt(input.value, 10);
   if (!isNaN(val) && val >= 1) {
-    selectedLength = Math.max(1, val);
-    document.querySelectorAll('.length-btn').forEach(b => b.classList.remove('selected'));
+    selectedLength = Math.min(50, val);
+    if (val > 50) input.value = '50';
+    document.querySelectorAll('.length-btn').forEach(b => {
+      b.classList.remove('selected');
+      b.setAttribute('aria-pressed', 'false');
+    });
   }
+  updatePlaylistSetupSummary();
 }
 
 async function generatePlaylist() {
@@ -2312,7 +2715,7 @@ async function generatePlaylist() {
   if (!mood) { alert('Please select or type a mood first.'); return; }
 
   const checkedIds = getActivePoolIds();
-  if (checkedIds.length === 0) { alert('Please select at least one artist first — use "Pick specific" then tap the artists you want.'); return; }
+  if (checkedIds.length === 0) { alert('Please select at least one artist first. Use “Browse and add artists” to choose from the library.'); return; }
 
   const btn = document.getElementById('genPlaylistBtn');
   btn.disabled = true;
@@ -2321,17 +2724,38 @@ async function generatePlaylist() {
   const artistPool = ARTISTS.filter(a => checkedIds.includes(a.id));
 
   const artistContext = artistContextBlock(artistPool);
+  const catalogTracks = getCatalogTracks(checkedIds);
+  const moodContext = [
+    ['Reference artists', document.getElementById('ctxReferenceArtists')?.value.trim()],
+    ['Avoid artists', document.getElementById('ctxAvoidArtists')?.value.trim()],
+    ['Setting', document.getElementById('ctxPlace')?.value.trim()],
+    ['Color or texture', document.getElementById('ctxColor')?.value.trim()],
+    ['Moment', document.getElementById('ctxExperience')?.value.trim()]
+  ].filter(([, value]) => value).map(([label, value]) => `${label}: ${value}`).join('\n');
+  const avoidArtists = document.getElementById('ctxAvoidArtists')?.value.trim() || '';
+  if (catalogTracks.length < selectedLength) {
+    alert(`This selection has only ${catalogTracks.length} catalogued tracks. Select more artists or choose a shorter playlist.`);
+    btn.disabled = false;
+    btn.textContent = 'Generate';
+    return;
+  }
+  const trackOptions = catalogTracks.map(track => `${track.trackId} | ${track.artist} | ${track.track}`).join('\n');
 
   const prompt = `You are an editorial music curator for a platform called The Soft Wave, which focuses on R&B, soul, neo-soul, alternative R&B, and related genres.
 
 Create a playlist with exactly ${selectedLength} tracks for this mood: "${mood}"
+${moodContext ? `\nADDITIONAL MOOD CONTEXT:\n${moodContext}\n` : ''}
 
-AVAILABLE ARTIST POOL:
+AVAILABLE ARTIST CONTEXT:
 ${artistContext}
 
+ONLY THESE CATALOG TRACKS MAY BE USED. Copy each trackId exactly. Do not invent, rename, or duplicate tracks:
+${trackOptions}
+
 Rules:
-- Only use artists from the pool above
-- Use real, actual tracks (use their listed starter tracks or other well-known tracks by them)
+- Only use the exact track IDs from the catalog above
+- Respect the requested reference artists, avoid artists, setting, texture, and personal context where provided
+- Never include an artist listed under "Avoid artists"
 - The playlist should have a poetic, evocative title (examples: "For 3am when the city's quiet", "Soft rain on a Saturday you forgot about", "The kind of love that doesn't ask questions")
 - Each track should have a one-sentence reason written in second person, present tense, poetic and evocative
 
@@ -2340,52 +2764,34 @@ Return EXACTLY this JSON format and nothing else:
   "title": "Playlist title here",
   "tracks": [
     {
-      "artist": "Artist Name",
-      "track": "Track Title",
+      "trackId": "artist-id::track-index",
       "reason": "One evocative sentence explaining why this track fits the mood, second person present tense."
     }
   ]
 }`;
 
   try {
-    let text;
-    if (OPENROUTER_KEY) {
-      const messages = [
-        { role: 'system', content: 'You are an editorial music curator. Return only valid JSON, no markdown.' },
-        { role: 'user', content: prompt }
-      ];
-      text = await callOpenRouter(messages, 0.9);
-    } else if (GEMINI_API_KEY) {
-      text = await callGemini(prompt, 0.9);
+    let data;
+    if (!OPENROUTER_KEY && !GEMINI_API_KEY) {
+      data = makeCatalogPlaylist(mood, checkedIds, selectedLength, avoidArtists);
     } else {
-      text = null;
+      const system = 'You are an editorial music curator. Return valid JSON and select only provided catalog track IDs.';
+      let raw = await callCurator(prompt, 0.2, system);
+      try {
+        data = validatePlaylistResponse(parseModelJson(raw), catalogTracks, selectedLength, avoidArtists);
+      } catch (validationError) {
+        raw = await callCurator(`${prompt}\n\nYour previous response failed validation: ${validationError.message} Return a corrected playlist with exactly ${selectedLength} distinct allowed track IDs.`, 0.1, system);
+        data = validatePlaylistResponse(parseModelJson(raw), catalogTracks, selectedLength, avoidArtists);
+      }
     }
-
-    if (text) {
-      const clean = text.replace(/```json|```/g, '').trim();
-      const data = JSON.parse(clean);
-      closePlaylistModal();
-      renderPlaylistOutput(data, mood);
-    } else {
-      throw new Error('no_key');
-    }
+    closePlaylistModal();
+    renderPlaylistOutput(data, mood);
   } catch(e) {
-    if (e.message === 'no_key' || e.message === 'No API key set' || e.message === 'No OpenRouter key') {
-      // Local fallback — build a playlist from scored artists without AI
-      const pool = [...artistPool].sort(() => Math.random() - 0.5).slice(0, selectedLength);
-      const data = {
-        title: `${mood.charAt(0).toUpperCase() + mood.slice(1)} — a soft wave`,
-        tracks: pool.map(a => ({ artist: a.name, track: a.tracks[0], reason: a.sound }))
-      };
-      closePlaylistModal();
-      renderPlaylistOutput(data, mood);
-    } else {
-      alert(`Couldn't generate playlist: ${e.message}`);
-    }
+    alert(`Couldn't generate a valid playlist: ${e.message}`);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Generate';
   }
-
-  btn.disabled = false;
-  btn.textContent = 'Generate';
 }
 
 function renderPlaylistOutput(data, mood) {
@@ -2396,17 +2802,19 @@ function renderPlaylistOutput(data, mood) {
     const raw = t.artist + ' ' + t.track;
     const spotifyUrl = `https://open.spotify.com/search/${spotifyQ(raw)}`;
     const appleMusicUrl = `music://music.apple.com/search?term=${appleQ(raw)}`;
-    const artistObj = ARTISTS.find(a => a.name.toLowerCase() === t.artist.toLowerCase());
+    const artistObj = findCatalogArtist(t.artist);
+    const safeArtist = escapeHtml(t.artist);
+    const safeTrack = escapeHtml(t.track);
     const artistLink = artistObj
-      ? `<span style="cursor:pointer;color:var(--gold);text-decoration:underline;text-underline-offset:3px;" onclick="closePlaylistOutput();openDetail('${artistObj.id}')">${t.artist}</span>`
-      : `<span style="color:var(--gold)">${t.artist}</span>`;
+      ? `<button type="button" style="cursor:pointer;color:var(--gold);text-decoration:underline;text-underline-offset:3px;background:none;border:0;font:inherit;" onclick="closePlaylistOutput();openDetail('${artistObj.id}')">${safeArtist}</button>`
+      : `<span style="color:var(--gold)">${safeArtist}</span>`;
 
     return `<div class="ai-track-card fade-in" style="animation-delay:${i * 0.05}s">
       <div class="ai-track-artist">${artistLink}</div>
-      <div class="ai-track-name">${t.track}</div>
-      <div class="ai-track-reason">${t.reason}</div>
+      <div class="ai-track-name">${safeTrack}</div>
+      <div class="ai-track-reason">${escapeHtml(t.reason)}</div>
       <div class="ai-track-links">
-        <a href="${spotifyUrl}" target="_blank" class="ai-track-link">↗ Spotify</a>
+        <a href="${spotifyUrl}" target="_blank" rel="noopener noreferrer" class="ai-track-link">↗ Spotify</a>
         <a href="${appleMusicUrl}" class="ai-track-link">↗ Apple Music</a>
       </div>
     </div>`;
@@ -2419,19 +2827,21 @@ function renderPlaylistOutput(data, mood) {
   inner.innerHTML = `
     <div class="playlist-output-header">
       <div class="playlist-eyebrow">The Soft Wave · Generated Playlist</div>
-      <div class="playlist-title">${data.title}</div>
-      <div class="playlist-meta">${data.tracks.length} tracks · Mood: ${mood}</div>
+      <div class="playlist-title">${escapeHtml(data.title)}</div>
+      <div class="playlist-meta">${data.tracks.length} tracks · Mood: ${escapeHtml(mood)}</div>
     </div>
     <div class="playlist-output-actions">
       <button class="btn btn-gold" onclick="saveCurrentPlaylist()" id="savePlaylistBtn">Save</button>
       <button class="btn btn-gold" style="background:transparent;" onclick="openPlaylistInChat()">Discuss in Chat</button>
       <button class="btn" onclick="sharePlaylist()">Share</button>
-      <button class="btn" onclick="copyPlaylist(\`${copyText.replace(/`/g,'\\`')}\`)">Copy</button>
+      <button class="btn" id="copyGeneratedPlaylistBtn">Copy</button>
       <button class="btn" onclick="closePlaylistOutput()">← Back</button>
     </div>
     <div class="playlist-tracks">${tracksHtml}</div>
     <div style="height:3rem;"></div>
   `;
+
+  inner.querySelector('#copyGeneratedPlaylistBtn')?.addEventListener('click', () => copyPlaylist(copyText));
 
   modal.classList.add('open');
 }
@@ -2529,14 +2939,21 @@ async function toggleFavorite(artistId, btn) {
   const isFav = favoriteArtistIds.has(artistId);
   const { data: { session } } = await _supabase.auth.getSession();
   if (!session) return;
-  if (isFav) {
-    await _supabase.from('favorites').delete().eq('artist_id', artistId);
-    favoriteArtistIds.delete(artistId);
-  } else {
-    await _supabase.from('favorites').insert({ user_id: session.user.id, artist_id: artistId });
-    favoriteArtistIds.add(artistId);
+  if (btn) btn.disabled = true;
+  try {
+    const result = isFav
+      ? await _supabase.from('favorites').delete().eq('artist_id', artistId)
+      : await _supabase.from('favorites').insert({ user_id: session.user.id, artist_id: artistId });
+    if (result.error) throw result.error;
+    if (isFav) favoriteArtistIds.delete(artistId);
+    else favoriteArtistIds.add(artistId);
+    if (btn) btn.classList.toggle('active', !isFav);
+  } catch (error) {
+    console.error('toggleFavorite:', error);
+    showTooltip(`Couldn't update favourite: ${error.message || 'Please try again.'}`);
+  } finally {
+    if (btn) btn.disabled = false;
   }
-  if (btn) btn.classList.toggle('active', !isFav);
 }
 
 async function loadSavedPlaylists() {
@@ -2560,11 +2977,6 @@ async function loadSavedPlaylists() {
   updateChatDownloadBtn();
 }
 
-async function persistSavedPlaylists() {
-  updateSavedCount();
-  updateChatDownloadBtn();
-}
-
 function updateSavedCount() {
   const el = document.getElementById('cnt-saved');
   if (el) el.textContent = savedPlaylists.length || '';
@@ -2575,20 +2987,25 @@ async function saveCurrentPlaylist() {
   const { title, mood, tracks } = lastGeneratedPlaylist;
   const exists = savedPlaylists.find(p => p.title === title && p.mood === mood);
   if (exists) { showTooltip('Already saved'); return; }
-  const { data: { session } } = await _supabase.auth.getSession();
-  if (!session) return;
-  const { data, error } = await _supabase.from('playlists').insert({
-    user_id: session.user.id,
-    name: title,
-    mood,
-    tracks
-  }).select().single();
-  if (error) { console.error('saveCurrentPlaylist:', error); return; }
-  savedPlaylists.unshift({ id: data.id, title: data.name, mood: data.mood, tracks: data.tracks, savedAt: data.created_at });
-  updateSavedCount();
-  updateChatDownloadBtn();
   const btn = document.getElementById('savePlaylistBtn');
-  if (btn) { btn.textContent = 'Saved ✓'; btn.disabled = true; }
+  if (btn) { btn.disabled = true; btn.textContent = 'Saving...'; }
+  try {
+    const { data: { session } } = await _supabase.auth.getSession();
+    if (!session) throw new Error('Sign in to save playlists.');
+    const { data, error } = await _supabase.from('playlists').insert({
+      user_id: session.user.id, name: title, mood, tracks
+    }).select().single();
+    if (error) throw error;
+    savedPlaylists.unshift({ id: data.id, title: data.name, mood: data.mood, tracks: data.tracks, savedAt: data.created_at });
+    updateSavedCount();
+    updateChatDownloadBtn();
+    if (btn) btn.textContent = 'Saved ✓';
+    showTooltip('Playlist saved ✓');
+  } catch (error) {
+    console.error('saveCurrentPlaylist:', error);
+    if (btn) { btn.disabled = false; btn.textContent = 'Save'; }
+    showTooltip(`Couldn't save playlist: ${error.message || 'Please try again.'}`);
+  }
 }
 
 function openPlaylistManager(editId) {
@@ -2626,10 +3043,10 @@ function renderPlaylistGrid() {
     const date = new Date(pl.savedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
     return `<div class="saved-playlist-card" onclick="openPlaylistManager('${pl.id}')">
       <div style="font-size:0.52rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--muted);margin-bottom:0.4rem;">${date}</div>
-      <div style="font-family:'Cormorant Garamond',serif;font-size:1.2rem;font-weight:400;margin-bottom:0.35rem;line-height:1.2;">${pl.title}</div>
-      <div style="font-size:0.58rem;color:var(--muted);letter-spacing:0.08em;">${pl.tracks.length} tracks · ${pl.mood}</div>
+      <div style="font-family:'Cormorant Garamond',serif;font-size:1.2rem;font-weight:400;margin-bottom:0.35rem;line-height:1.2;">${escapeHtml(pl.title)}</div>
+      <div style="font-size:0.58rem;color:var(--muted);letter-spacing:0.08em;">${pl.tracks.length} tracks · ${escapeHtml(pl.mood)}</div>
       <div style="display:flex;gap:0.5rem;margin-top:0.85rem;">
-        <button class="btn" style="font-size:0.55rem;padding:0.3rem 0.65rem;" onclick="event.stopPropagation();downloadPlaylistData('${pl.title.replace(/'/g,"\\'")}','${pl.mood.replace(/'/g,"\\'")}',savedPlaylists.find(p=>p.id==='${pl.id}').tracks)">↓ Download</button>
+        <button class="btn" style="font-size:0.55rem;padding:0.3rem 0.65rem;" onclick="event.stopPropagation();downloadSavedPlaylist('${escapeHtml(pl.id)}')">↓ Download</button>
         <button class="btn" style="font-size:0.55rem;padding:0.3rem 0.65rem;color:var(--red);border-color:rgba(196,124,124,0.3);" onclick="event.stopPropagation();deleteSavedPlaylist('${pl.id}')">Remove</button>
       </div>
     </div>`;
@@ -2659,9 +3076,9 @@ function renderPlaylistEditor(id) {
     return `<div class="editable-track" id="track-row-${id}-${i}">
       <button class="track-remove-btn" onclick="removeTrackFromSaved('${id}',${i})" title="Remove">✕</button>
       <div style="flex:1;">
-        <div style="font-size:0.58rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--gold);margin-bottom:0.2rem;">${t.artist}</div>
-        <div style="font-family:'Cormorant Garamond',serif;font-size:1rem;font-weight:500;margin-bottom:0.3rem;">${t.track}</div>
-        ${t.reason ? `<div style="font-family:'Cormorant Garamond',serif;font-size:0.85rem;font-style:italic;color:rgba(233,229,223,0.55);line-height:1.5;margin-bottom:0.35rem;">${t.reason}</div>` : ''}
+        <div style="font-size:0.58rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--gold);margin-bottom:0.2rem;">${escapeHtml(t.artist)}</div>
+        <div style="font-family:'Cormorant Garamond',serif;font-size:1rem;font-weight:500;margin-bottom:0.3rem;">${escapeHtml(t.track)}</div>
+        ${t.reason ? `<div style="font-family:'Cormorant Garamond',serif;font-size:0.85rem;font-style:italic;color:rgba(233,229,223,0.55);line-height:1.5;margin-bottom:0.35rem;">${escapeHtml(t.reason)}</div>` : ''}
         <div style="display:flex;gap:0.4rem;">
           <a href="${spotifyUrl}" target="_blank" rel="noopener noreferrer" class="ai-track-link">↗ Spotify</a>
           <a href="${appleUrl}" class="ai-track-link">↗ Apple Music</a>
@@ -2675,7 +3092,7 @@ function renderPlaylistEditor(id) {
     <div class="manager-back-bar">
       <button class="btn" onclick="renderPlaylistGrid()">← All Playlists</button>
       <div style="display:flex;gap:0.5rem;">
-        <button class="btn" onclick="downloadPlaylistData('${pl.title.replace(/'/g,"\\'")}','${pl.mood.replace(/'/g,"\\'")}',savedPlaylists.find(p=>p.id==='${pl.id}').tracks)">↓ Download</button>
+        <button class="btn" onclick="downloadSavedPlaylist('${escapeHtml(pl.id)}')">↓ Download</button>
         <button class="btn btn-gold" onclick="discussSavedPlaylist('${pl.id}')">Discuss in Chat</button>
         <button class="btn" onclick="closePlaylistManager()">Close</button>
       </div>
@@ -2683,33 +3100,73 @@ function renderPlaylistEditor(id) {
     <div style="margin-bottom:0.35rem;">
       <div class="playlist-eyebrow">The Soft Wave · Saved Playlist</div>
     </div>
-    <input class="custom-mood-input" id="edit-title-${id}" value="${pl.title.replace(/"/g,'&quot;')}" style="font-family:'Cormorant Garamond',serif;font-size:1.8rem;font-weight:300;background:transparent;border:none;border-bottom:1px solid var(--border);border-radius:0;width:100%;color:var(--text);padding:0.25rem 0;margin-bottom:0.5rem;" oninput="updateSavedTitle('${id}',this.value)">
-    <div class="playlist-meta" style="margin-bottom:2rem;">${pl.tracks.length} tracks · Mood: ${pl.mood}</div>
+    <input class="custom-mood-input" id="edit-title-${id}" value="${escapeHtml(pl.title)}" maxlength="100" style="font-family:'Cormorant Garamond',serif;font-size:1.8rem;font-weight:300;background:transparent;border:none;border-bottom:1px solid var(--border);border-radius:0;width:100%;color:var(--text);padding:0.25rem 0;margin-bottom:0.5rem;" onchange="updateSavedTitle('${id}',this.value)">
+    <div class="playlist-meta" style="margin-bottom:2rem;">${pl.tracks.length} tracks · Mood: ${escapeHtml(pl.mood)}</div>
     <div id="track-list-${id}">${tracksHtml}</div>
     <div style="height:3rem;"></div>`;
 }
 
-function updateSavedTitle(id, value) {
+async function updateSavedTitle(id, value) {
   const pl = savedPlaylists.find(p => p.id === id);
-  if (pl) { pl.title = value; persistSavedPlaylists(); }
+  if (!pl) return;
+  const title = String(value ?? '').trim().slice(0, 100);
+  const input = document.getElementById(`edit-title-${id}`);
+  if (!title) {
+    if (input) input.value = pl.title;
+    showTooltip('Playlist name cannot be empty.');
+    return;
+  }
+  if (title === pl.title) return;
+  if (input) input.disabled = true;
+  try {
+    const { error } = await _supabase.from('playlists').update({ name: title }).eq('id', id);
+    if (error) throw error;
+    pl.title = title;
+    renderPlaylistEditor(id);
+    showTooltip('Playlist renamed ✓');
+  } catch (error) {
+    console.error('updateSavedTitle:', error);
+    if (input) input.value = pl.title;
+    showTooltip(`Couldn't rename playlist: ${error.message || 'Please try again.'}`);
+  } finally {
+    if (input) input.disabled = false;
+  }
+}
+
+function downloadSavedPlaylist(id) {
+  const playlist = savedPlaylists.find(item => item.id === id);
+  if (!playlist) { showTooltip('Playlist could not be found. Refresh and try again.'); return; }
+  downloadPlaylistData(playlist.title, playlist.mood, playlist.tracks);
 }
 
 async function removeTrackFromSaved(id, index) {
   const pl = savedPlaylists.find(p => p.id === id);
   if (!pl) return;
-  pl.tracks.splice(index, 1);
-  const { error } = await _supabase.from('playlists').update({ tracks: pl.tracks }).eq('id', id);
-  if (error) { console.error('removeTrackFromSaved:', error); return; }
-  updateSavedCount();
-  renderPlaylistEditor(id);
+  if (!Number.isInteger(index) || index < 0 || index >= pl.tracks.length) return;
+  const updatedTracks = pl.tracks.filter((_, trackIndex) => trackIndex !== index);
+  try {
+    const { error } = await _supabase.from('playlists').update({ tracks: updatedTracks }).eq('id', id);
+    if (error) throw error;
+    pl.tracks = updatedTracks;
+    updateSavedCount();
+    renderPlaylistEditor(id);
+  } catch (error) {
+    console.error('removeTrackFromSaved:', error);
+    showTooltip(`Couldn't remove track: ${error.message || 'Please try again.'}`);
+  }
 }
 
 async function deleteSavedPlaylist(id) {
-  const { error } = await _supabase.from('playlists').delete().eq('id', id);
-  if (error) { console.error('deleteSavedPlaylist:', error); return; }
-  savedPlaylists = savedPlaylists.filter(p => p.id !== id);
-  updateSavedCount();
-  renderPlaylistGrid();
+  try {
+    const { error } = await _supabase.from('playlists').delete().eq('id', id);
+    if (error) throw error;
+    savedPlaylists = savedPlaylists.filter(p => p.id !== id);
+    updateSavedCount();
+    renderPlaylistGrid();
+  } catch (error) {
+    console.error('deleteSavedPlaylist:', error);
+    showTooltip(`Couldn't remove playlist: ${error.message || 'Please try again.'}`);
+  }
 }
 
 function discussSavedPlaylist(id) {
@@ -2765,17 +3222,17 @@ function renderAiTracks(tracks, containerId, withArtistLink = false) {
     const raw = t.artist + ' ' + t.track;
     const spotifyUrl = `https://open.spotify.com/search/${spotifyQ(raw)}`;
     const appleMusicUrl = `music://music.apple.com/search?term=${appleQ(raw)}`;
-    const artistObj = ARTISTS.find(a => a.name.toLowerCase() === t.artist.toLowerCase());
+    const artistObj = findCatalogArtist(t.artist);
     const artistDisplay = (withArtistLink && artistObj)
-      ? `<span style="cursor:pointer;text-decoration:underline;text-underline-offset:3px;" onclick="openDetail('${artistObj.id}')">${t.artist}</span>`
-      : t.artist;
+      ? `<button type="button" style="cursor:pointer;text-decoration:underline;text-underline-offset:3px;background:none;border:0;color:inherit;font:inherit;" onclick="openDetail('${artistObj.id}')">${escapeHtml(t.artist)}</button>`
+      : escapeHtml(t.artist);
 
     return `<div class="ai-track-card fade-in" style="animation-delay:${i*0.07}s">
       <div class="ai-track-artist">${artistDisplay}</div>
-      <div class="ai-track-name">${t.track}</div>
-      <div class="ai-track-reason">${t.reason}</div>
+      <div class="ai-track-name">${escapeHtml(t.track)}</div>
+      <div class="ai-track-reason">${escapeHtml(t.reason)}</div>
       <div class="ai-track-links">
-        <a href="${spotifyUrl}" target="_blank" class="ai-track-link">↗ Spotify</a>
+        <a href="${spotifyUrl}" target="_blank" rel="noopener noreferrer" class="ai-track-link">↗ Spotify</a>
         <a href="${appleMusicUrl}" class="ai-track-link">↗ Apple Music</a>
       </div>
     </div>`;
@@ -2819,7 +3276,7 @@ function localChatResponse(msg, history = []) {
   if (/^(tell me more|more about (them|that|him|her)|what else|expand|elaborate|more details?|and their|what are their)/.test(lower)) {
     // Find the most recently mentioned artist in conversation history
     for (const h of [...history].reverse()) {
-      for (const a of ARTISTS) {
+      for (const a of ARTISTS.filter(artist => artist.verified !== false)) {
         if (h.text.toLowerCase().includes(a.name.toLowerCase())) {
           return artistCard(a, true);
         }
@@ -2858,7 +3315,7 @@ function localChatResponse(msg, history = []) {
   const affinity = lower.match(/i(?:'?m| am)?\s*(?:love|loving|like|liking|into|obsessed with|been listening to|always listen to|keep listening to|a fan of|really like|really love)\s+(.{2,40})/);
   if (affinity) {
     const phrase = affinity[1].replace(/[^\w\s]/g, '').trim();
-    const match = ARTISTS.find(a => phrase.includes(a.name.toLowerCase()));
+    const match = ARTISTS.find(a => a.verified !== false && phrase.includes(a.name.toLowerCase()));
     if (match) {
       updateUserProfile(match.id, match.moods[0] || null);
       const similar = ARTISTS
@@ -3060,7 +3517,7 @@ function localChatResponse(msg, history = []) {
     .filter(w => w.length > 2 && !STOP.has(w));
 
   // ── Build searchable corpus per artist ────────────────────
-  const index = ARTISTS.map(a => ({
+  const index = ARTISTS.filter(a => a.verified !== false).map(a => ({
     artist: a,
     corpus: [
       a.name, a.genre, a.about, a.sound,
@@ -3111,10 +3568,9 @@ function localChatResponse(msg, history = []) {
   const isCompare    = /compar|differ|versus|vs\.?|contrast|between/.test(lower);
   const isPlaylistQ  = /playlist|give me|list|make|build/.test(lower);
 
-  // Find the highest-scoring named artist (if any)
-  const mentionedArtist = scoredAll.length > 0 && scoredAll[0].score >= 20
-    ? scoredAll[0].artist
-    : null;
+  // Treat an artist as explicitly mentioned only on an exact catalog name or alias match.
+  const mentionedArtists = findArtistMentions(lower);
+  const mentionedArtist = mentionedArtists.length === 1 ? mentionedArtists[0] : null;
 
   // Track interest in this artist
   if (mentionedArtist) updateUserProfile(mentionedArtist.id, mentionedArtist.moods[0] || null);
@@ -3183,9 +3639,8 @@ function localChatResponse(msg, history = []) {
   }
 
   // ── 2. "Compare X and Y" ──────────────────────────────────
-  if (isCompare && scoredAll.length >= 2 && scoredAll[0].score >= 10 && scoredAll[1].score >= 10) {
-    const a = scoredAll[0].artist;
-    const b = scoredAll[1].artist;
+  if (isCompare && mentionedArtists.length === 2) {
+    const [a, b] = mentionedArtists;
     const sharedMoods = a.moods.filter(m => b.moods.includes(m));
     const sameGenreFamily = a.genre.split('/').some(g =>
       b.genre.split('/').some(g2 => g.trim().toLowerCase() === g2.trim().toLowerCase()));
@@ -3298,7 +3753,7 @@ function localChatResponse(msg, history = []) {
   // ── 11. List all artists ───────────────────────────────────
   if (/show|list|all|everyone|everything|full|complete|what.*have|what.*got/.test(lower) && /artist|name|roster|catalogue|catalog/.test(lower)) {
     const byGroup = {};
-    for (const a of ARTISTS) { if (!byGroup[a.group]) byGroup[a.group] = []; byGroup[a.group].push(a.name); }
+    for (const a of ARTISTS.filter(artist => artist.verified !== false)) { if (!byGroup[a.group]) byGroup[a.group] = []; byGroup[a.group].push(a.name); }
     return `here's the full roster:<br><br>` + Object.entries(byGroup).map(([g, names]) =>
       `<strong>${SECTION_LABELS[g]}</strong><br>${names.join(', ')}`
     ).join('<br><br>');
@@ -3568,13 +4023,17 @@ function appendChatMsg(role, html, id = null) {
 async function addArtistAI() {
   const name = document.getElementById('addArtistName').value.trim();
   if (!name) { alert('Enter an artist name.'); return; }
+  if (name.length > 100) { alert('Artist names must be 100 characters or fewer.'); return; }
+  const existing = findCatalogArtist(name);
+  if (existing) { alert(`${existing.name} is already in the artist catalog.`); return; }
 
   const group = document.getElementById('addArtistSection').value;
   const btn = document.getElementById('addArtistBtn');
   const status = document.getElementById('addArtistStatus');
 
   btn.disabled = true;
-  status.textContent = 'Researching...';
+  status.style.color = 'var(--muted)';
+  status.textContent = 'Drafting an unverified profile...';
 
   const prompt = `Generate a music profile for the artist "${name}" for a curated R&B/soul platform called The Soft Wave.
 
@@ -3590,24 +4049,36 @@ Return EXACTLY this JSON format and nothing else:
 Only include real, actual tracks that this artist has released. If unsure, use their most well-known songs.`;
 
   try {
-    const text = await callGemini(prompt, 0.7);
-    const clean = text.replace(/```json|```/g, '').trim();
-    const data = JSON.parse(clean);
+    const text = await callCurator(prompt, 0.2, 'Create a cautious music profile. Return valid JSON only. Do not guess if uncertain.');
+    const data = parseModelJson(text);
+    const requiredText = ['genre', 'about', 'sound'];
+    for (const key of requiredText) {
+      if (typeof data[key] !== 'string' || !data[key].trim() || data[key].length > (key === 'about' ? 1200 : 300)) {
+        throw new Error(`The generated ${key} field was missing or invalid.`);
+      }
+    }
+    for (const key of ['moods', 'tracks']) {
+      if (!Array.isArray(data[key]) || !data[key].length || data[key].length > 12 || data[key].some(item => typeof item !== 'string' || !item.trim() || item.length > 160)) {
+        throw new Error(`The generated ${key} list was missing or invalid.`);
+      }
+    }
+    const cleanList = values => [...new Set(values.map(value => value.trim()))];
 
     const newId = name.toLowerCase().replace(/[^a-z0-9]/g, '_') + '_' + Date.now();
     const newArtist = {
       id: newId,
       name,
       group,
-      genre: data.genre,
-      about: data.about,
-      sound: data.sound,
-      moods: data.moods,
-      tracks: data.tracks
+      genre: data.genre.trim(),
+      about: data.about.trim(),
+      sound: data.sound.trim(),
+      moods: cleanList(data.moods),
+      tracks: cleanList(data.tracks),
+      verified: false
     };
 
     ARTISTS.push(newArtist);
-    status.textContent = `${name} added!`;
+    status.textContent = `${name} added as an unverified draft. Check each track before relying on recommendations.`;
     document.getElementById('addArtistName').value = '';
     if (document.getElementById('artistPoolChips')) initArtistPool();
     renderGrid();
