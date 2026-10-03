@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>The Soft Wave</title>
+<title>Soft WAV</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500&family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300;1,400&display=swap" rel="stylesheet">
@@ -1314,7 +1314,7 @@
 <!-- AUTH OVERLAY -->
 <div id="authOverlay" style="position:fixed;inset:0;background:var(--bg);z-index:9999;display:flex;align-items:center;justify-content:center;padding:1.5rem;">
   <div style="width:100%;max-width:380px;">
-    <div style="font-family:'Cormorant Garamond',serif;font-size:1.8rem;font-weight:300;letter-spacing:0.05em;margin-bottom:0.2rem;">The Soft Wave</div>
+    <div style="font-family:'Cormorant Garamond',serif;font-size:1.8rem;font-weight:300;letter-spacing:0.05em;margin-bottom:0.2rem;">Soft WAV</div>
     <div style="font-size:0.55rem;font-family:'DM Mono',monospace;letter-spacing:0.15em;color:var(--muted);text-transform:uppercase;margin-bottom:2.5rem;">a curated space for sound and feeling</div>
 
     <div id="authError" style="display:none;font-size:0.6rem;color:var(--red);margin-bottom:1rem;padding:0.6rem 0.8rem;border:1px solid rgba(196,124,124,0.3);border-radius:2px;"></div>
@@ -1354,7 +1354,7 @@
 <div id="mainApp">
 <div class="apikey-modal" id="apikeyModal">
   <div class="apikey-inner">
-    <div class="apikey-logo">The Soft Wave <span style="color:var(--gold)">·</span></div>
+    <div class="apikey-logo">Soft WAV <span style="color:var(--gold)">·</span></div>
     <div class="apikey-tagline">a curated space for sound and feeling</div>
 
     <div class="apikey-label">Paste your API key</div>
@@ -1365,7 +1365,7 @@
       Get a free key at <a href="https://openrouter.ai/keys" target="_blank">openrouter.ai/keys</a> (recommended) or <a href="https://aistudio.google.com/app/apikey" target="_blank">aistudio.google.com</a> — no credit card needed. Keys are never stored.
     </div>
 
-    <button class="btn btn-gold" style="width:100%;padding:0.75rem;margin-bottom:0.5rem;" onclick="saveApiKey()">Enter The Soft Wave</button>
+    <button class="btn btn-gold" style="width:100%;padding:0.75rem;margin-bottom:0.5rem;" onclick="saveApiKey()">Enter Soft WAV</button>
     <button class="btn" style="width:100%;padding:0.6rem;font-size:0.58rem;" onclick="skipApiKey()">Continue without a key — use basic mode</button>
   </div>
 </div>
@@ -1374,7 +1374,7 @@
 <header>
   <div style="display:flex;align-items:center;gap:0.75rem;">
     <button class="btn" id="sidebarToggle" onclick="toggleSidebar()" title="Menu" style="padding:0.4rem 0.6rem;font-size:1rem;">☰</button>
-    <div class="logo">The Soft Wave <span>·</span></div>
+    <div class="logo">Soft WAV <span>·</span></div>
   </div>
   <div class="header-actions">
     <button class="select-mode-toggle" id="selectModeToggle" onclick="toggleSelectMode()" title="Select artists">Select</button>
@@ -1892,7 +1892,7 @@ async function callOpenRouter(messages, temperature = 0.75) {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${OPENROUTER_KEY}`,
       'HTTP-Referer': window.location.href,
-      'X-Title': 'The Soft Wave'
+      'X-Title': 'Soft WAV'
     },
     body: JSON.stringify({
       model: SELECTED_MODEL,
@@ -2741,7 +2741,7 @@ async function generatePlaylist() {
   }
   const trackOptions = catalogTracks.map(track => `${track.trackId} | ${track.artist} | ${track.track}`).join('\n');
 
-  const prompt = `You are an editorial music curator for a platform called The Soft Wave, which focuses on R&B, soul, neo-soul, alternative R&B, and related genres.
+  const prompt = `You are an editorial music curator for a platform called Soft WAV, which focuses on R&B, soul, neo-soul, alternative R&B, and related genres.
 
 Create a playlist with exactly ${selectedLength} tracks for this mood: "${mood}"
 ${moodContext ? `\nADDITIONAL MOOD CONTEXT:\n${moodContext}\n` : ''}
@@ -2826,7 +2826,7 @@ function renderPlaylistOutput(data, mood) {
 
   inner.innerHTML = `
     <div class="playlist-output-header">
-      <div class="playlist-eyebrow">The Soft Wave · Generated Playlist</div>
+      <div class="playlist-eyebrow">Soft WAV · Generated Playlist</div>
       <div class="playlist-title">${escapeHtml(data.title)}</div>
       <div class="playlist-meta">${data.tracks.length} tracks · Mood: ${escapeHtml(mood)}</div>
     </div>
@@ -2867,9 +2867,9 @@ function sharePlaylist() {
       const q = encodeURIComponent(raw);
       return `${i + 1}. ${t.artist} — ${t.track}\n   ↗ Spotify: https://open.spotify.com/search/${q}\n   ↗ Apple Music: https://music.apple.com/search?term=${appleQ(raw)}`;
     }).join('\n') +
-    '\n\nvia The Soft Wave';
+    '\n\nvia Soft WAV';
   if (navigator.share) {
-    navigator.share({ title: `The Soft Wave — ${title}`, text }).catch(() => {});
+    navigator.share({ title: `Soft WAV — ${title}`, text }).catch(() => {});
   } else {
     copyPlaylist(text);
   }
@@ -2902,7 +2902,7 @@ function downloadPlaylistData(title, mood, tracks) {
       ].join('\n');
     }),
     '',
-    'via The Soft Wave'
+    'via Soft WAV'
   ];
   const blob = new Blob([lines.join('\n')], { type: 'text/plain' });
   const url = URL.createObjectURL(blob);
@@ -3029,7 +3029,7 @@ function renderPlaylistGrid() {
     inner.innerHTML = `
       <div class="manager-back-bar">
         <div>
-          <div class="playlist-eyebrow">The Soft Wave · My Playlists</div>
+          <div class="playlist-eyebrow">Soft WAV · My Playlists</div>
           <div class="playlist-title" style="font-size:2rem;">My Playlists</div>
         </div>
         <button class="btn" onclick="closePlaylistManager()">← Close</button>
@@ -3055,7 +3055,7 @@ function renderPlaylistGrid() {
   inner.innerHTML = `
     <div class="manager-back-bar">
       <div>
-        <div class="playlist-eyebrow">The Soft Wave · My Playlists</div>
+        <div class="playlist-eyebrow">Soft WAV · My Playlists</div>
         <div class="playlist-title" style="font-size:2rem;">My Playlists</div>
         <div class="playlist-meta">${savedPlaylists.length} saved</div>
       </div>
@@ -3098,7 +3098,7 @@ function renderPlaylistEditor(id) {
       </div>
     </div>
     <div style="margin-bottom:0.35rem;">
-      <div class="playlist-eyebrow">The Soft Wave · Saved Playlist</div>
+      <div class="playlist-eyebrow">Soft WAV · Saved Playlist</div>
     </div>
     <input class="custom-mood-input" id="edit-title-${id}" value="${escapeHtml(pl.title)}" maxlength="100" style="font-family:'Cormorant Garamond',serif;font-size:1.8rem;font-weight:300;background:transparent;border:none;border-bottom:1px solid var(--border);border-radius:0;width:100%;color:var(--text);padding:0.25rem 0;margin-bottom:0.5rem;" onchange="updateSavedTitle('${id}',this.value)">
     <div class="playlist-meta" style="margin-bottom:2rem;">${pl.tracks.length} tracks · Mood: ${escapeHtml(pl.mood)}</div>
@@ -3921,7 +3921,7 @@ async function callGeminiChat(userMsg) {
     `${a.name} (${a.genre}, ${SECTION_LABELS[a.group]}): ${a.about} Sound: ${a.sound}. Moods: ${a.moods.join(', ')}. Key tracks: ${a.tracks.slice(0,2).join(', ')}.`
   ).join('\n');
 
-  const systemPrompt = `You are the voice behind The Soft Wave — a real person who loves R&B, soul, and neo-soul. Not a bot. Not an assistant. A friend who has heard everything and actually cares.
+  const systemPrompt = `You are the voice behind Soft WAV — a real person who loves R&B, soul, and neo-soul. Not a bot. Not an assistant. A friend who has heard everything and actually cares.
 
 Personality rules — do NOT break these:
 - NEVER say "How can I help you?", "How can I assist?", "What can I do for you?", or anything like that. Ever.
@@ -4035,7 +4035,7 @@ async function addArtistAI() {
   status.style.color = 'var(--muted)';
   status.textContent = 'Drafting an unverified profile...';
 
-  const prompt = `Generate a music profile for the artist "${name}" for a curated R&B/soul platform called The Soft Wave.
+  const prompt = `Generate a music profile for the artist "${name}" for a curated R&B/soul platform called Soft WAV.
 
 Return EXACTLY this JSON format and nothing else:
 {
