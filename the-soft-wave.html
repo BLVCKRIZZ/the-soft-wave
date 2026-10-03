@@ -4105,11 +4105,11 @@ Only include real, actual tracks that this artist has released. If unsure, use t
 
 // ⚠ Replace these two values with your own Supabase project credentials:
 // Project URL → Supabase dashboard > Project Settings > API
-// Anon key   → same page, under "Project API keys"
-const SUPABASE_URL  = 'https://siljqirgrnciulimzawg.supabase.co';
-const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNpbGpxaXJncm5jaXVsaW16YXdnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYzMTgxNjIsImV4cCI6MjA5MTg5NDE2Mn0.hHzXGMxs7ONAPNYEV2Ed9sSqLl8v41VUK7PLgWa3hIs';
+// Publishable key → same page, under "Project API keys"
+const SUPABASE_URL  = 'https://mbecdcimfjodnjihfmwz.supabase.co';
+const SUPABASE_KEY  = 'sb_publishable_QDJXehjsHTQnTcqu1m2Utg_nPnDwA_z';
 
-const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 function showAuthOverlay() {
   document.getElementById('authOverlay').style.display = 'flex';
