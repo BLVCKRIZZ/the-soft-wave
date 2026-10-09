@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="300" viewBox="0 0 1000 300" role="img" aria-labelledby="title desc">
+  <title id="title">Soft WAV wordmark</title>
+  <desc id="desc">Black Soft WAV lettering with a refined, gently flowing underline on a white background.</desc>
+  <rect width="1000" height="300" fill="#fff"/>
+  <text x="500" y="148" text-anchor="middle" fill="#111" font-family="Arial, Helvetica, sans-serif" font-size="112" font-weight="500" letter-spacing="-3">Soft <tspan font-weight="700" letter-spacing="2">WAV</tspan></text>
+  <path d="M220 200 C310 200 332 200 374 200 C395 200 402 188 415 188 C428 188 434 212 447 212 C460 212 467 188 480 188 C493 188 499 212 512 212 C525 212 532 188 545 188 C558 188 565 200 584 200 C626 200 676 200 780 200" fill="none" stroke="#111" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

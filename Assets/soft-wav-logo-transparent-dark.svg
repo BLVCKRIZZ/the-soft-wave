@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024" role="img" aria-labelledby="title desc">
+  <title id="title">Soft WAV dark logo, transparent background</title>
+  <desc id="desc">White Soft WAV lettering and waveform underline on a transparent background.</desc>
+  <text x="512" y="480" text-anchor="middle" fill="#fff" font-family="Arial, Helvetica, sans-serif" font-size="146" font-weight="500" letter-spacing="-5">Soft <tspan font-weight="700" letter-spacing="2">WAV</tspan></text>
+  <path d="M190 570 C284 570 334 570 376 570 C397 570 406 550 422 550 C438 550 446 590 462 590 C478 590 486 550 502 550 C518 550 526 590 542 590 C558 590 566 550 582 550 C598 550 607 570 628 570 C670 570 740 570 834 570" fill="none" stroke="#fff" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
